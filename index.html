@@ -103,7 +103,6 @@
     </div>
 
     <script>
-        // Enlace exacto extraído de tu captura de pantalla real
         const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBNHSKcKRrfBmC9FhGrMWbjjHf4JNV7_fVW8H-pdjcCh4rXvWpPaHUhGoUG1LpA/pub?output=csv";
 
         let rawData = [];
@@ -140,33 +139,57 @@
                 });
         }
 
+        // Función auxiliar para separar correctamente celdas ignorando comas internas de números
+        function splitCsvLine(line, separator) {
+            let fields = [];
+            let currentField = '';
+            let insideQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                let char = line[i];
+                if (char === '"') {
+                    insideQuotes = !insideQuotes;
+                } else if (char === separator && !insideQuotes) {
+                    fields.push(currentField);
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            fields.push(currentField);
+            return fields;
+        }
+
         function parseCsvData(text) {
             const lines = text.split(/\r?\n/);
             if(lines.length < 2) return;
             
             const separator = lines[0].includes(";") ? ";" : ",";
             
-            // Limpieza estricta eliminando espacios extras internos y saltos ocultos
             const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '').replace(/\s+/g, '');
-            const headers = lines[0].split(separator).map(cleanString);
+            const headers = splitCsvLine(lines[0], separator).map(cleanString);
             
             const dataRows = [];
             for(let i = 1; i < lines.length; i++) {
                 if(!lines[i].trim()) continue;
-                const columns = lines[i].split(separator).map(c => c.trim().replace(/"/g, ''));
+                const columns = splitCsvLine(lines[i], separator);
                 let rowObj = {};
                 headers.forEach((header, index) => {
-                    rowObj[header] = columns[index] || "";
+                    rowObj[header] = columns[index] ? columns[index].trim().replace(/"/g, '') : "";
                 });
                 dataRows.push(rowObj);
             }
 
             const cleanNumber = (val) => {
                 if (!val) return 0;
+                // Remueve símbolos monetarios y espacios, conserva números, puntos, comas y guiones
                 let parsed = val.replace(/[^0-9.,-]/g, '').trim();
+                
+                // Si tiene comas y puntos (ej. 8,945,068.88), elimina comas de miles y deja el punto decimal
                 if (parsed.includes(',') && parsed.includes('.')) {
-                    parsed = parsed.replace(/\./g, '').replace(',', '.');
+                    parsed = parsed.replace(/,/g, '');
                 } else if (parsed.includes(',')) {
+                    // Si solo tiene comas, asume que es el separador decimal regional y lo cambia a punto
                     parsed = parsed.replace(',', '.');
                 }
                 return parseFloat(parsed) || 0;
@@ -191,7 +214,6 @@
             updateDashboard();
         }
 
-        // El resto del procesamiento visual se mantiene igual
         function buildSelectors() {
             const yearSel = document.getElementById('yearSelector');
             const years = [...new Set(rawData.map(r => r.year))];
