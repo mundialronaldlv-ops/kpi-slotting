@@ -6,9 +6,8 @@
     <title>Reporte Ejecutivo de Inventarios 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
     </style>
 </head>
@@ -35,8 +34,6 @@
                 </button>
             </div>
         </header>
-
-        <div id="statusAlert" class="hidden p-4 rounded-xl text-sm font-medium border bg-emerald-500/10 text-emerald-400 border-emerald-500/20"></div>
 
         <section class="space-y-4">
             <div class="flex items-center gap-2">
@@ -106,7 +103,7 @@
     </div>
 
     <script>
-        // Enlace publicado en la Web de tu Google Sheet
+        // Tu URL de Google Sheets publicada como CSV
         const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pub?output=csv";
 
         let rawData = [];
@@ -119,7 +116,6 @@
             fetchDataFromGoogle();
         };
 
-        // Función para conectar y descargar los datos desde tu Google Workspace
         function fetchDataFromGoogle() {
             const badge = document.getElementById('liveBadge');
             badge.innerText = "Sincronizando...";
@@ -129,8 +125,13 @@
                 .then(response => response.text())
                 .then(csvText => {
                     parseCsvData(csvText);
-                    badge.innerText = "Live Connected";
-                    badge.className = "text-xs bg-emerald-500/20 text-emerald-400 font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30";
+                    if(rawData.length > 0) {
+                        badge.innerText = "Live Connected";
+                        badge.className = "text-xs bg-emerald-500/20 text-emerald-400 font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30";
+                    } else {
+                        badge.innerText = "Estructura Incorrecta";
+                        badge.className = "text-xs bg-rose-500/20 text-rose-400 font-semibold px-2.5 py-1 rounded-full border border-rose-500/30";
+                    }
                 })
                 .catch(err => {
                     console.error(err);
@@ -139,31 +140,55 @@
                 });
         }
 
-        // Procesa el CSV recibido y limpia los encabezados automáticamente
         function parseCsvData(text) {
-            const lines = text.split("\n");
+            const lines = text.split(/\r?\n/);
             if(lines.length < 2) return;
             
-            const headers = lines[0].split(",").map(h => h.trim().replace(/"/g, ''));
+            // Detecta si usa coma o punto y coma
+            const separator = lines[0].includes(";") ? ";" : ",";
+            
+            // Normalizar encabezados (quitar acentos, espacios, comillas y pasarlos a minúsculas)
+            const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '');
+            const headers = lines[0].split(separator).map(cleanString);
+            
             const dataRows = [];
-
             for(let i = 1; i < lines.length; i++) {
                 if(!lines[i].trim()) continue;
-                const columns = lines[i].split(",").map(c => c.trim().replace(/"/g, ''));
+                const columns = lines[i].split(separator).map(c => c.trim().replace(/"/g, ''));
                 let rowObj = {};
                 headers.forEach((header, index) => {
-                    rowObj[header] = columns[index];
+                    rowObj[header] = columns[index] || "";
                 });
                 dataRows.push(rowObj);
             }
 
-            // Mapea los datos según los nombres exactos de tu Excel en Drive
-            rawData = dataRows.map(row => ({
-                year: parseInt(row.Año) || 2026,
-                month: row.Mes ? String(row.Mes).toUpperCase().trim() : 'DESCONOCIDO',
-                avgInventory: parseFloat(row.Inventario_Promedio_Bs) || 0,
-                purchases: parseFloat(row.Suma_Compras_Bs) || 0
-            })).filter(r => r.month !== 'DESCONOCIDO');
+            // Función para limpiar números que vienen con formato de moneda o texto
+            const cleanNumber = (val) => {
+                if (!val) return 0;
+                let parsed = val.replace(/[^0-9.,-]/g, '').trim();
+                if (parsed.includes(',') && parsed.includes('.')) {
+                    parsed = parsed.replace(/\./g, '').replace(',', '.');
+                } else if (parsed.includes(',')) {
+                    parsed = parsed.replace(',', '.');
+                }
+                return parseFloat(parsed) || 0;
+            };
+
+            // Mapea buscando palabras clave sin importar mayúsculas/minúsculas o guiones
+            rawData = dataRows.map(row => {
+                const rowKeys = Object.keys(row);
+                const yearKey = rowKeys.find(k => k.includes("año") || k.includes("ano"));
+                const monthKey = rowKeys.find(k => k.includes("mes"));
+                const invKey = rowKeys.find(k => k.includes("inventario"));
+                const purKey = rowKeys.find(k => k.includes("compra"));
+
+                return {
+                    year: yearKey ? parseInt(row[yearKey]) || 2026 : 2026,
+                    month: monthKey ? String(row[monthKey]).toUpperCase().trim() : 'DESCONOCIDO',
+                    avgInventory: invKey ? cleanNumber(row[invKey]) : 0,
+                    purchases: purKey ? cleanNumber(row[purKey]) : 0
+                };
+            }).filter(r => r.month !== 'DESCONOCIDO' && r.month !== '');
 
             buildSelectors();
             updateDashboard();
@@ -190,4 +215,66 @@
             filteredData.forEach((r, idx) => monthSel.innerHTML += `<option value="${idx}">${r.month}</option>`);
 
             const totalPurchases = filteredData.reduce((sum, r) => sum + r.purchases, 0);
-            const avgInventory = filteredData.reduce((sum, r) => sum + r.
+            const avgInventory = filteredData.reduce((sum, r) => sum + r.avgInventory, 0) / filteredData.length;
+            const periodRotation = avgInventory > 0 ? totalPurchases / avgInventory : 0;
+            const totalPeriodDays = periodRotation > 0 ? (filteredData.length * 30) / periodRotation : 0;
+
+            document.getElementById('annualPurchases').innerText = formatBs(totalPurchases);
+            document.getElementById('annualAvgInventory').innerText = formatBs(avgInventory);
+            document.getElementById('annualRotation').innerText = periodRotation.toFixed(2) + 'x';
+            document.getElementById('annualDays').innerText = totalPeriodDays.toFixed(2) + ' días';
+
+            renderTrends(filteredData);
+            monthSel.value = filteredData.length - 1; 
+            updateSpecificMonth();
+        }
+
+        function updateSpecificMonth() {
+            const selectedYear = document.getElementById('yearSelector').value;
+            let filteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
+            const idx = document.getElementById('monthSelector').value;
+            if (idx === "" || !filteredData[idx]) return;
+
+            const mData = filteredData[idx];
+            const mRot = mData.avgInventory > 0 ? mData.purchases / mData.avgInventory : 0;
+            const mDays = mRot > 0 ? 30 / mRot : 0;
+
+            document.getElementById('mPurchases').innerText = formatBs(mData.purchases);
+            document.getElementById('mInventory').innerText = formatBs(mData.avgInventory);
+            document.getElementById('mRotation').innerText = mRot.toFixed(2) + 'x';
+            document.getElementById('mDays').innerText = mDays.toFixed(2) + ' días';
+        }
+
+        function renderTrends(data) {
+            const labels = data.map(r => r.month);
+            
+            if(financialChartInstance) financialChartInstance.destroy();
+            financialChartInstance = new Chart(document.getElementById('financialChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Suma de Compras', data: data.map(r => r.purchases), backgroundColor: '#0ea5e9' },
+                        { label: 'Inventario Promedio', data: data.map(r => r.avgInventory), borderColor: '#2dd4bf', type: 'line', borderWidth: 3, pointRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
+            });
+
+            const rotationData = data.map(r => r.avgInventory > 0 ? r.purchases / r.avgInventory : 0);
+            if(logisticChartInstance) logisticChartInstance.destroy();
+            logisticChartInstance = new Chart(document.getElementById('logisticChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Rotación (Veces)', data: rotationData, borderColor: '#f59e0b', borderWidth: 3, yAxisID: 'yRot' },
+                        { label: 'Días de Stock', data: rotationData.map(rot => rot > 0 ? 30/rot : 0), borderColor: '#f43f5e', borderWidth: 3, yAxisID: 'yDays' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yRot: { type: 'linear', position: 'left', grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yDays: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#94a3b8' } } } }
+            });
+        }
+    </script>
+</body>
+</html>
