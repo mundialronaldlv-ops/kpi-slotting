@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Inventario Mensual y Anual</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+    </style>
+</head>
+<body class="p-6 bg-slate-900 text-slate-100 min-h-screen">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header Principal -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    📦 Sistema de Análisis de Inventario
+                    <span class="text-xs bg-teal-500/20 text-teal-400 font-semibold px-2.5 py-1 rounded-full border border-teal-500/30">Mensual & Anual</span>
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Carga tu plantilla mensual estructurada en filas para consolidar KPIs financieros y físicos.</p>
+            </div>
+            
+            <!-- Selector de Año Dinámico -->
+            <div class="flex items-center gap-3 bg-slate-900/60 p-2 rounded-xl border border-slate-700">
+                <label for="yearSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400 pl-2">Filtrar Año:</label>
+                <select id="yearSelector" class="bg-slate-800 text-white border border-slate-600 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:border-teal-500 transition-colors">
+                    <option value="Todos">Todos los Años</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Zona de Carga Dropzone -->
+        <div id="dropzone" class="border-2 border-dashed border-slate-600 bg-slate-800/40 hover:bg-slate-800/80 hover:border-teal-500 transition-all rounded-2xl p-8 text-center cursor-pointer relative shadow-inner group">
+            <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden">
+            <div class="space-y-3">
+                <div class="mx-auto w-12 h-12 rounded-xl bg-slate-700 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform text-teal-400">📊</div>
+                <p class="text-base font-medium text-slate-200">Arrastra aquí tu archivo <span class="text-teal-400 font-semibold">Excel</span> o haz clic para buscar</p>
+                <p class="text-xs text-slate-400">Procesa automáticamente filas agrupadas por Meses y calcula métricas anualizadas.</p>
+            </div>
+        </div>
+
+        <!-- Alerta de Estado -->
+        <div id="statusAlert" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+        <!-- Resumen Consolidado Anual -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-2">
+                <div class="h-5 w-1 bg-teal-500 rounded"></div>
+                <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300">Resumen Consolidado Anual</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Suma de Compras Anual</p>
+                    <p id="annualPurchases" class="text-2xl font-bold mt-2 text-white">Bs 0.00</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Inventario Promedio Anual</p>
+                    <p id="annualAvgInventory" class="text-2xl font-bold mt-2 text-teal-400">Bs 0.00</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Rotación del Período</p>
+                    <p id="annualRotation" class="text-2xl font-bold mt-2 text-amber-400">0.00x</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Días de Cobertura Prom.</p>
+                    <p id="annualDays" class="text-2xl font-bold mt-2 text-rose-400">0.00 días</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Análisis Mensual Específico -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="h-5 w-1 bg-indigo-500 rounded"></div>
+                    <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300">Análisis Mensual Específico</h2>
+                </div>
+                <select id="monthSelector" class="bg-slate-800 text-sm border border-slate-600 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 text-white">
+                    <option value="">Selecciona un mes...</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <p class="text-xs text-slate-400 font-medium">Compras del Mes</p>
+                    <p id="mPurchases" class="text-xl font-bold text-slate-200 mt-1">-</p>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <p class="text-xs text-slate-400 font-medium">Inventario Promedio</p>
+                    <p id="mInventory" class="text-xl font-bold text-slate-200 mt-1">-</p>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <p class="text-xs text-slate-400 font-medium">Rotación Mensual</p>
+                    <p id="mRotation" class="text-xl font-bold text-slate-200 mt-1">-</p>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <p class="text-xs text-slate-400 font-medium">Días de Stock (Base 30)</p>
+                    <p id="mDays" class="text-xl font-bold text-slate-200 mt-1">-</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficos -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Relación Financiera: Compras vs Inventario</h3>
+                <div class="h-72"><canvas id="financialChart"></canvas></div>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Eficiencia Logística: Rotación y Días</h3>
+                <div class="h-72"><canvas id="logisticChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- Capacidad Física -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col md:flex-row items-center gap-6">
+                <div class="w-1/3 max-w-[120px]"><canvas id="racksPieChart"></canvas></div>
+                <div class="flex-1 space-y-2 w-full">
+                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Ocupación de Racks</h4>
+                    <div class="flex justify-between text-xs text-slate-400 pt-2"><span>Espacio Utilizado:</span><span id="racksUsedText" class="font-semibold text-white">-</span></div>
+                    <div class="flex justify-between text-xs text-slate-400"><span>Capacidad Total:</span><span id="racksTotalText" class="font-semibold text-slate-200">-</span></div>
+                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2"><div id="racksProgressBar" class="bg-teal-500 h-full w-0 transition-all duration-500"></div></div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col md:flex-row items-center gap-6">
+                <div class="w-1/3 max-w-[120px]"><canvas id="shelvesPieChart"></canvas></div>
+                <div class="flex-1 space-y-2 w-full">
+                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Ocupación de Estantes</h4>
+                    <div class="flex justify-between text-xs text-slate-400 pt-2"><span>Espacio Utilizado:</span><span id="shelvesUsedText" class="font-semibold text-white">-</span></div>
+                    <div class="flex justify-between text-xs text-slate-400"><span>Capacidad Total:</span><span id="shelvesTotalText" class="font-semibold text-slate-200">-</span></div>
+                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2"><div id="shelvesProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        let rawData = [];
+        let financialChartInstance = null; let logisticChartInstance = null;
+        let racksPieInstance = null; let shelvesPieInstance = null;
+
+        const formatBs = (val) => new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB' }).format(val).replace('BOB', 'Bs.');
+
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-teal-500', 'bg-slate-800'); });
+        dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('border-teal-500', 'bg-slate-800'); });
+        dropzone.addEventListener('drop', (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            const reader = new FileReader();
+            showStatus('Procesando archivo excel...', 'info');
+
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if(json.length === 0 || !('Inventario_Promedio_Bs' in json[0]) || !('Suma_Compras_Bs' in json[0])) {
+                        throw new Error('Estructura de plantilla no válida. Revisa los nombres de las columnas.');
+                    }
+
+                    rawData = json.map(row => ({
+                        year: parseInt(row.Año) || 2026,
+                        month: row.Mes ? String(row.Mes).trim() : 'Desconocido',
+                        avgInventory: parseFloat(row.Inventario_Promedio_Bs) || 0,
+                        purchases: parseFloat(row.Suma_Compras_Bs) || 0,
+                        racksUsed: parseInt(row.Racks_Ocupados) || 700,
+                        racksTotal: parseInt(row.Racks_Totales) || 1000,
+                        shelvesUsed: parseInt(row.Estantes_Ocupados) || 400,
+                        shelvesTotal: parseInt(row.Estantes_Totales) || 600
+                    }));
+
+                    showStatus('¡Datos cargados con éxito!', 'success');
+                    buildSelectors();
+                    updateDashboard();
+                } catch (error) {
+                    showStatus('Error: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(files[0]);
+        }
+
+        function showStatus(msg, type) {
+            const alert = document.getElementById('statusAlert');
+            alert.className = "p-4 rounded-xl text-sm font-medium border " + (type==='success' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : type==='error' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20");
+            alert.innerText = msg; alert.classList.remove('hidden');
+        }
+
+        function buildSelectors() {
+            const yearSel = document.getElementById('yearSelector');
+            const years = [...new Set(rawData.map(r => r.year))];
+            yearSel.innerHTML = '<option value="Todos">Todos los Años</option>';
+            years.forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
+            yearSel.onchange = () => updateDashboard();
+            document.getElementById('monthSelector').onchange = () => updateSpecificMonth();
+        }
+
+        function updateDashboard() {
+            const selectedYear = document.getElementById('yearSelector').value;
+            let filteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
+            if (filteredData.length === 0) return;
+
+            const monthSel = document.getElementById('monthSelector');
+            monthSel.innerHTML = '';
+            filteredData.forEach((r, idx) => monthSel.innerHTML += `<option value="${idx}">${r.month} (${r.year})</option>`);
+
+            const totalPurchases = filteredData.reduce((sum, r) => sum + r.purchases, 0);
+            const avgInventory = filteredData.reduce((sum, r) => sum + r.avgInventory, 0) / filteredData.length;
+            const periodRotation = avgInventory > 0 ? totalPurchases / avgInventory : 0;
+            const totalPeriodDays = periodRotation > 0 ? (filteredData.length * 30) / periodRotation : 0;
+
+            document.getElementById('annualPurchases').innerText = formatBs(totalPurchases);
+            document.getElementById('annualAvgInventory').innerText = formatBs(avgInventory);
+            document.getElementById('annualRotation').innerText = periodRotation.toFixed(2) + 'x';
+            document.getElementById('annualDays').innerText = totalPeriodDays.toFixed(2) + ' días';
+
+            renderTrends(filteredData);
+            monthSel.value = filteredData.length - 1;
+            updateSpecificMonth();
+        }
+
+        function updateSpecificMonth() {
+            const selectedYear = document.getElementById('yearSelector').value;
+            let filteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
+            const idx = document.getElementById('monthSelector').value;
+            if (idx === "" || !filteredData[idx]) return;
+
+            const mData = filteredData[idx];
+            const mRot = mData.avgInventory > 0 ? mData.purchases / mData.avgInventory : 0;
+            const mDays = mRot > 0 ? 30 / mRot : 0;
+
+            document.getElementById('mPurchases').innerText = formatBs(mData.purchases);
+            document.getElementById('mInventory').innerText = formatBs(mData.avgInventory);
+            document.getElementById('mRotation').innerText = mRot.toFixed(2) + 'x';
+            document.getElementById('mDays').innerText = mDays.toFixed(2) + ' días';
+
+            updatePhysicalMetrics(mData);
+        }
+
+        function renderTrends(data) {
+            const labels = data.map(r => r.month);
+            if(financialChartInstance) financialChartInstance.destroy();
+            financialChartInstance = new Chart(document.getElementById('financialChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Suma de Compras', data: data.map(r => r.purchases), backgroundColor: '#0ea5e9' },
+                        { label: 'Inventario Promedio', data: data.map(r => r.avgInventory), borderColor: '#2dd4bf', type: 'line', borderWidth: 3, pointRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
+            });
+
+            const rotationData = data.map(r => r.avgInventory > 0 ? r.purchases / r.avgInventory : 0);
+            if(logisticChartInstance) logisticChartInstance.destroy();
+            logisticChartInstance = new Chart(document.getElementById('logisticChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Rotación (Veces)', data: rotationData, borderColor: '#f59e0b', borderWidth: 3, yAxisID: 'yRot' },
+                        { label: 'Días de Stock', data: rotationData.map(rot => rot > 0 ? 30/rot : 0), borderColor: '#f43f5e', borderWidth: 3, yAxisID: 'yDays' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yRot: { type: 'linear', position: 'left', grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yDays: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#94a3b8' } } } }
+            });
+        }
+
+        function updatePhysicalMetrics(mData) {
+            const rPct = (mData.racksUsed / mData.racksTotal) * 100;
+            document.getElementById('racksUsedText').innerText = mData.racksUsed + ' pos.';
+            document.getElementById('racksTotalText').innerText = mData.racksTotal + ' pos.';
+            document.getElementById('racksProgressBar').style.width = `${rPct}%`;
+
+            const sPct = (mData.shelvesUsed / mData.shelvesTotal) * 100;
+            document.getElementById('shelvesUsedText').innerText = mData.shelvesUsed + ' est.';
+            document.getElementById('shelvesTotalText').innerText = mData.shelvesTotal + ' est.';
+            document.getElementById('shelvesProgressBar').style.width = `${sPct}%`;
+
+            if(racksPieInstance) racksPieInstance.destroy();
+            racksPieInstance = new Chart(document.getElementById('racksPieChart'), { type: 'doughnut', data: { datasets: [{ data: [mData.racksUsed, mData.racksTotal - mData.racksUsed], backgroundColor: [rPct >= 85 ? '#f43f5e':'#2dd4bf', '#334155'], borderWidth: 0 }] }, options: { responsive: true, cutout: '75%', plugins: { tooltip: { enabled: false } } } });
+
+            if(shelvesPieInstance) shelvesPieInstance.destroy();
+            shelvesPieInstance = new Chart(document.getElementById('shelvesPieChart'), { type: 'doughnut', data: { datasets: [{ data: [mData.shelvesUsed, mData.shelvesTotal - mData.shelvesUsed], backgroundColor: [sPct >= 85 ? '#f43f5e':'#6366f1', '#334155'], borderWidth: 0 }] }, options: { responsive: true, cutout: '75%', plugins: { tooltip: { enabled: false } } } });
+        }
+    </script>
+</body>
+</html>
