@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Ejecutivo de Inventarios 2026</title>
+    <title>Reporte Ejecutivo de Inventarios</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
     </style>
 </head>
 <body class="p-6 bg-slate-900 text-slate-100 min-h-screen">
 
     <div class="max-w-7xl mx-auto space-y-6">
-        
+
+        <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl gap-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                     📊 Reporte Ejecutivo de Rotación e Inventarios
-                    <span id="liveBadge" class="text-xs bg-amber-500/20 text-amber-400 font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30">Conectando...</span>
+                    <span id="liveBadge" class="text-xs bg-amber-500/20 text-amber-400 font-semibold px-2.5 py-1 rounded-full border border-amber-500/30">Conectando...</span>
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">Análisis de eficiencia logística y desempeño financiero conectado a Google Workspace.</p>
+                <p class="text-slate-400 text-sm mt-1">Análisis de eficiencia logística y desempeño financiero conectado a Google Sheets.</p>
             </div>
-            
+
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <div class="flex items-center gap-2 bg-slate-900/60 p-2 rounded-xl border border-slate-700">
                     <label for="yearSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400 pl-2">Año:</label>
@@ -35,12 +36,16 @@
             </div>
         </header>
 
+        <!-- Alerta de Estado -->
+        <div id="statusAlert" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+
+        <!-- Resumen Consolidado -->
         <section class="space-y-4">
             <div class="flex items-center gap-2">
                 <div class="h-5 w-1 bg-teal-500 rounded"></div>
                 <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300">Resumen Consolidado del Período</h2>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Suma de Compras Total</p>
@@ -61,6 +66,7 @@
             </div>
         </section>
 
+        <!-- Detalle Mensual -->
         <section class="space-y-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -90,6 +96,7 @@
             </div>
         </section>
 
+        <!-- Gráficos -->
         <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
                 <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Relación Financiera: Compras vs Inventario</h3>
@@ -100,49 +107,91 @@
                 <div class="h-72"><canvas id="logisticChart"></canvas></div>
             </div>
         </section>
+
+        <!-- Capacidad Física -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col md:flex-row items-center gap-6">
+                <div class="w-1/3 max-w-[120px]"><canvas id="racksPieChart"></canvas></div>
+                <div class="flex-1 space-y-2 w-full">
+                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Ocupación de Racks</h4>
+                    <div class="flex justify-between text-xs text-slate-400 pt-2"><span>Espacio Utilizado:</span><span id="racksUsedText" class="font-semibold text-white">-</span></div>
+                    <div class="flex justify-between text-xs text-slate-400"><span>Capacidad Total:</span><span id="racksTotalText" class="font-semibold text-slate-200">-</span></div>
+                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2"><div id="racksProgressBar" class="bg-teal-500 h-full w-0 transition-all duration-500"></div></div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col md:flex-row items-center gap-6">
+                <div class="w-1/3 max-w-[120px]"><canvas id="shelvesPieChart"></canvas></div>
+                <div class="flex-1 space-y-2 w-full">
+                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Ocupación de Estantes</h4>
+                    <div class="flex justify-between text-xs text-slate-400 pt-2"><span>Espacio Utilizado:</span><span id="shelvesUsedText" class="font-semibold text-white">-</span></div>
+                    <div class="flex justify-between text-xs text-slate-400"><span>Capacidad Total:</span><span id="shelvesTotalText" class="font-semibold text-slate-200">-</span></div>
+                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2"><div id="shelvesProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div></div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
-        // PEGA TU NUEVO ENLACE AQUÍ ABAJO ENTRE LAS COMILLAS:
-        const googleSheetCsvUrl = "PON_TU_NUEVO_ENLACE_AQUÍ";
+        // =====================================================================
+        // 1) PEGA AQUÍ TU ENLACE CSV DE GOOGLE SHEETS (ver instrucciones abajo)
+        //    Debe terminar en algo como: .../pub?gid=0&single=true&output=csv
+        // =====================================================================
+        const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pub?output=csv";
 
         let rawData = [];
-        let financialChartInstance = null; 
+        let financialChartInstance = null;
         let logisticChartInstance = null;
+        let racksPieInstance = null;
+        let shelvesPieInstance = null;
 
         const formatBs = (val) => new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB' }).format(val).replace('BOB', 'Bs.');
 
-        window.onload = function() {
+        window.onload = function () {
             fetchDataFromGoogle();
         };
 
-        function fetchDataFromGoogle() {
+        function setBadge(text, colorClass) {
             const badge = document.getElementById('liveBadge');
-            badge.innerText = "Sincronizando...";
-            badge.className = "text-xs bg-amber-500/20 text-amber-400 font-semibold px-2.5 py-1 rounded-full border border-amber-500/30";
+            badge.innerText = text;
+            badge.className = "text-xs font-semibold px-2.5 py-1 rounded-full border " + colorClass;
+        }
 
-            if(googleSheetCsvUrl.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pubhtml")) {
-                badge.innerText = "Falta pegar el enlace";
-                badge.className = "text-xs bg-rose-500/20 text-rose-400 font-semibold px-2.5 py-1 rounded-full border border-rose-500/30";
+        function showStatus(msg, type) {
+            const alert = document.getElementById('statusAlert');
+            alert.className = "p-4 rounded-xl text-sm font-medium border " + (type === 'success' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : type === 'error' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20");
+            alert.innerText = msg;
+            alert.classList.remove('hidden');
+        }
+
+        function fetchDataFromGoogle() {
+            setBadge("Sincronizando...", "bg-amber-500/20 text-amber-400 border-amber-500/30");
+
+            if (!googleSheetCsvUrl || googleSheetCsvUrl.includes("PON_TU_ENLACE_CSV_AQUI")) {
+                setBadge("Falta pegar el enlace", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                showStatus('Edita el archivo y pega tu enlace CSV de Google Sheets en la variable googleSheetCsvUrl.', 'error');
                 return;
             }
 
             fetch(googleSheetCsvUrl)
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) throw new Error('No se pudo leer la hoja (revisa que esté publicada).');
+                    return response.text();
+                })
                 .then(csvText => {
                     parseCsvData(csvText);
-                    if(rawData.length > 0) {
-                        badge.innerText = "Live Connected";
-                        badge.className = "text-xs bg-emerald-500/20 text-emerald-400 font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30";
+                    if (rawData.length > 0) {
+                        setBadge("Live Connected", "bg-emerald-500/20 text-emerald-400 border-emerald-500/30");
+                        showStatus('¡Datos sincronizados con éxito!', 'success');
                     } else {
-                        badge.innerText = "Verificar Columnas";
-                        badge.className = "text-xs bg-rose-500/20 text-rose-400 font-semibold px-2.5 py-1 rounded-full border border-rose-500/30";
+                        setBadge("Verificar Columnas", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                        showStatus('No se encontraron filas válidas. Revisa los nombres de columnas en la hoja.', 'error');
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    badge.innerText = "Error de Conexión";
-                    badge.className = "text-xs bg-rose-500/20 text-rose-400 font-semibold px-2.5 py-1 rounded-full border border-rose-500/30";
+                    setBadge("Error de Conexión", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                    showStatus('Error: ' + err.message, 'error');
                 });
         }
 
@@ -150,7 +199,6 @@
             let fields = [];
             let currentField = '';
             let insideQuotes = false;
-
             for (let i = 0; i < line.length; i++) {
                 let char = line[i];
                 if (char === '"') {
@@ -168,16 +216,15 @@
 
         function parseCsvData(text) {
             const lines = text.split(/\r?\n/);
-            if(lines.length < 2) return;
-            
+            if (lines.length < 2) { rawData = []; return; }
+
             const separator = lines[0].includes(";") ? ";" : ",";
-            
             const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '').replace(/\s+/g, '');
             const headers = splitCsvLine(lines[0], separator).map(cleanString);
-            
+
             const dataRows = [];
-            for(let i = 1; i < lines.length; i++) {
-                if(!lines[i].trim()) continue;
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
                 const columns = splitCsvLine(lines[i], separator);
                 let rowObj = {};
                 headers.forEach((header, index) => {
@@ -203,12 +250,20 @@
                 const monthKey = rowKeys.find(k => k.includes("mes"));
                 const invKey = rowKeys.find(k => k.includes("inventario"));
                 const purKey = rowKeys.find(k => k.includes("compra"));
+                const racksUsedKey = rowKeys.find(k => k.includes("racksocupados"));
+                const racksTotalKey = rowKeys.find(k => k.includes("rackstotales"));
+                const shelvesUsedKey = rowKeys.find(k => k.includes("estantesocupados"));
+                const shelvesTotalKey = rowKeys.find(k => k.includes("estantestotales"));
 
                 return {
                     year: yearKey ? parseInt(row[yearKey]) || 2026 : 2026,
                     month: monthKey ? String(row[monthKey]).toUpperCase().trim() : 'DESCONOCIDO',
                     avgInventory: invKey ? cleanNumber(row[invKey]) : 0,
-                    purchases: purKey ? cleanNumber(row[purKey]) : 0
+                    purchases: purKey ? cleanNumber(row[purKey]) : 0,
+                    racksUsed: racksUsedKey ? parseInt(cleanNumber(row[racksUsedKey])) : 0,
+                    racksTotal: racksTotalKey ? parseInt(cleanNumber(row[racksTotalKey])) : 0,
+                    shelvesUsed: shelvesUsedKey ? parseInt(cleanNumber(row[shelvesUsedKey])) : 0,
+                    shelvesTotal: shelvesTotalKey ? parseInt(cleanNumber(row[shelvesTotalKey])) : 0
                 };
             }).filter(r => r.month !== 'DESCONOCIDO' && r.month !== '');
 
@@ -221,8 +276,8 @@
             const years = [...new Set(rawData.map(r => r.year))];
             yearSel.innerHTML = '<option value="Todos">Todos</option>';
             years.forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
-            
-            yearSel.value = years[0] || "Todos";
+
+            yearSel.value = years[years.length - 1] || "Todos";
             yearSel.onchange = () => updateDashboard();
             document.getElementById('monthSelector').onchange = () => updateSpecificMonth();
         }
@@ -247,7 +302,7 @@
             document.getElementById('annualDays').innerText = totalPeriodDays.toFixed(2) + ' días';
 
             renderTrends(filteredData);
-            monthSel.value = filteredData.length - 1; 
+            monthSel.value = filteredData.length - 1;
             updateSpecificMonth();
         }
 
@@ -265,12 +320,13 @@
             document.getElementById('mInventory').innerText = formatBs(mData.avgInventory);
             document.getElementById('mRotation').innerText = mRot.toFixed(2) + 'x';
             document.getElementById('mDays').innerText = mDays.toFixed(2) + ' días';
+
+            updatePhysicalMetrics(mData);
         }
 
         function renderTrends(data) {
             const labels = data.map(r => r.month);
-            
-            if(financialChartInstance) financialChartInstance.destroy();
+            if (financialChartInstance) financialChartInstance.destroy();
             financialChartInstance = new Chart(document.getElementById('financialChart').getContext('2d'), {
                 type: 'bar',
                 data: {
@@ -284,19 +340,40 @@
             });
 
             const rotationData = data.map(r => r.avgInventory > 0 ? r.purchases / r.avgInventory : 0);
-            if(logisticChartInstance) logisticChartInstance.destroy();
+            if (logisticChartInstance) logisticChartInstance.destroy();
             logisticChartInstance = new Chart(document.getElementById('logisticChart').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
                         { label: 'Rotación (Veces)', data: rotationData, borderColor: '#f59e0b', borderWidth: 3, yAxisID: 'yRot' },
-                        { label: 'Días de Stock', data: rotationData.map(rot => rot > 0 ? 30/rot : 0), borderColor: '#f43f5e', borderWidth: 3, yAxisID: 'yDays' }
+                        { label: 'Días de Stock', data: rotationData.map(rot => rot > 0 ? 30 / rot : 0), borderColor: '#f43f5e', borderWidth: 3, yAxisID: 'yDays' }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yRot: { type: 'linear', position: 'left', grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yDays: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#94a3b8' } } } }
             });
         }
+
+        function updatePhysicalMetrics(mData) {
+            const hasRacks = mData.racksTotal > 0;
+            const hasShelves = mData.shelvesTotal > 0;
+
+            const rPct = hasRacks ? (mData.racksUsed / mData.racksTotal) * 100 : 0;
+            document.getElementById('racksUsedText').innerText = hasRacks ? mData.racksUsed + ' pos.' : '-';
+            document.getElementById('racksTotalText').innerText = hasRacks ? mData.racksTotal + ' pos.' : '-';
+            document.getElementById('racksProgressBar').style.width = `${rPct}%`;
+
+            const sPct = hasShelves ? (mData.shelvesUsed / mData.shelvesTotal) * 100 : 0;
+            document.getElementById('shelvesUsedText').innerText = hasShelves ? mData.shelvesUsed + ' est.' : '-';
+            document.getElementById('shelvesTotalText').innerText = hasShelves ? mData.shelvesTotal + ' est.' : '-';
+            document.getElementById('shelvesProgressBar').style.width = `${sPct}%`;
+
+            if (racksPieInstance) racksPieInstance.destroy();
+            racksPieInstance = new Chart(document.getElementById('racksPieChart'), { type: 'doughnut', data: { datasets: [{ data: hasRacks ? [mData.racksUsed, mData.racksTotal - mData.racksUsed] : [0, 1], backgroundColor: [rPct >= 85 ? '#f43f5e' : '#2dd4bf', '#334155'], borderWidth: 0 }] }, options: { responsive: true, cutout: '75%', plugins: { tooltip: { enabled: false } } } });
+
+            if (shelvesPieInstance) shelvesPieInstance.destroy();
+            shelvesPieInstance = new Chart(document.getElementById('shelvesPieChart'), { type: 'doughnut', data: { datasets: [{ data: hasShelves ? [mData.shelvesUsed, mData.shelvesTotal - mData.shelvesUsed] : [0, 1], backgroundColor: [sPct >= 85 ? '#f43f5e' : '#6366f1', '#334155'], borderWidth: 0 }] }, options: { responsive: true, cutout: '75%', plugins: { tooltip: { enabled: false } } } });
+        }
     </script>
 </body>
-</html>x
+</html>
