@@ -103,8 +103,8 @@
     </div>
 
     <script>
-        // Tu URL de Google Sheets publicada como CSV
-        const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pub?output=csv";
+        // Enlace exacto extraído de tu captura de pantalla real
+        const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBNHSKcKRrfBmC9FhGrMWbjjHf4JNV7_fVW8H-pdjcCh4rXvWpPaHUhGoUG1LpA/pub?output=csv";
 
         let rawData = [];
         let financialChartInstance = null; 
@@ -129,7 +129,7 @@
                         badge.innerText = "Live Connected";
                         badge.className = "text-xs bg-emerald-500/20 text-emerald-400 font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30";
                     } else {
-                        badge.innerText = "Estructura Incorrecta";
+                        badge.innerText = "Verificar Columnas";
                         badge.className = "text-xs bg-rose-500/20 text-rose-400 font-semibold px-2.5 py-1 rounded-full border border-rose-500/30";
                     }
                 })
@@ -144,11 +144,10 @@
             const lines = text.split(/\r?\n/);
             if(lines.length < 2) return;
             
-            // Detecta si usa coma o punto y coma
             const separator = lines[0].includes(";") ? ";" : ",";
             
-            // Normalizar encabezados (quitar acentos, espacios, comillas y pasarlos a minúsculas)
-            const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '');
+            // Limpieza estricta eliminando espacios extras internos y saltos ocultos
+            const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '').replace(/\s+/g, '');
             const headers = lines[0].split(separator).map(cleanString);
             
             const dataRows = [];
@@ -162,7 +161,6 @@
                 dataRows.push(rowObj);
             }
 
-            // Función para limpiar números que vienen con formato de moneda o texto
             const cleanNumber = (val) => {
                 if (!val) return 0;
                 let parsed = val.replace(/[^0-9.,-]/g, '').trim();
@@ -174,10 +172,9 @@
                 return parseFloat(parsed) || 0;
             };
 
-            // Mapea buscando palabras clave sin importar mayúsculas/minúsculas o guiones
             rawData = dataRows.map(row => {
                 const rowKeys = Object.keys(row);
-                const yearKey = rowKeys.find(k => k.includes("año") || k.includes("ano"));
+                const yearKey = rowKeys.find(k => k.includes("ano") || k.includes("año"));
                 const monthKey = rowKeys.find(k => k.includes("mes"));
                 const invKey = rowKeys.find(k => k.includes("inventario"));
                 const purKey = rowKeys.find(k => k.includes("compra"));
@@ -194,6 +191,7 @@
             updateDashboard();
         }
 
+        // El resto del procesamiento visual se mantiene igual
         function buildSelectors() {
             const yearSel = document.getElementById('yearSelector');
             const years = [...new Set(rawData.map(r => r.year))];
