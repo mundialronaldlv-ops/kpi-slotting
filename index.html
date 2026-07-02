@@ -103,7 +103,8 @@
     </div>
 
     <script>
-        const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBNHSKcKRrfBmC9FhGrMWbjjHf4JNV7_fVW8H-pdjcCh4rXvWpPaHUhGoUG1LpA/pub?output=csv";
+        // PEGA TU NUEVO ENLACE AQUÍ ABAJO ENTRE LAS COMILLAS:
+        const googleSheetCsvUrl = "PON_TU_NUEVO_ENLACE_AQUÍ";
 
         let rawData = [];
         let financialChartInstance = null; 
@@ -119,6 +120,12 @@
             const badge = document.getElementById('liveBadge');
             badge.innerText = "Sincronizando...";
             badge.className = "text-xs bg-amber-500/20 text-amber-400 font-semibold px-2.5 py-1 rounded-full border border-amber-500/30";
+
+            if(googleSheetCsvUrl.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pubhtml")) {
+                badge.innerText = "Falta pegar el enlace";
+                badge.className = "text-xs bg-rose-500/20 text-rose-400 font-semibold px-2.5 py-1 rounded-full border border-rose-500/30";
+                return;
+            }
 
             fetch(googleSheetCsvUrl)
                 .then(response => response.text())
@@ -139,7 +146,6 @@
                 });
         }
 
-        // Función auxiliar para separar correctamente celdas ignorando comas internas de números
         function splitCsvLine(line, separator) {
             let fields = [];
             let currentField = '';
@@ -182,14 +188,10 @@
 
             const cleanNumber = (val) => {
                 if (!val) return 0;
-                // Remueve símbolos monetarios y espacios, conserva números, puntos, comas y guiones
                 let parsed = val.replace(/[^0-9.,-]/g, '').trim();
-                
-                // Si tiene comas y puntos (ej. 8,945,068.88), elimina comas de miles y deja el punto decimal
                 if (parsed.includes(',') && parsed.includes('.')) {
                     parsed = parsed.replace(/,/g, '');
                 } else if (parsed.includes(',')) {
-                    // Si solo tiene comas, asume que es el separador decimal regional y lo cambia a punto
                     parsed = parsed.replace(',', '.');
                 }
                 return parseFloat(parsed) || 0;
@@ -297,4 +299,4 @@
         }
     </script>
 </body>
-</html>
+</html>x
