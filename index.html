@@ -11,137 +11,136 @@
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
     </style>
 </head>
-<body class="p-6 bg-slate-900 text-slate-100 min-h-screen">
+<body class="h-screen w-screen p-4 bg-slate-900 text-slate-100 flex flex-col overflow-hidden justify-between">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-[1600px] mx-auto w-full h-full flex flex-col justify-between gap-3">
 
         <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl gap-4">
+        <header class="flex justify-between items-center bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 shadow-md">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
                     📊 Reporte Ejecutivo de Rotación e Inventarios
-                    <span id="liveBadge" class="text-xs bg-amber-500/20 text-amber-400 font-semibold px-2.5 py-1 rounded-full border border-amber-500/30">Conectando...</span>
+                    <span id="liveBadge" class="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">Conectando...</span>
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">Análisis de eficiencia logística y desempeño financiero conectado a Google Sheets.</p>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div class="flex items-center gap-2 bg-slate-900/60 p-2 rounded-xl border border-slate-700">
-                    <label for="yearSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400 pl-2">Año:</label>
-                    <select id="yearSelector" class="bg-slate-800 text-white border border-slate-600 rounded-lg px-2 py-1 text-sm font-medium focus:outline-none"></select>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-700">
+                    <label for="yearSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Año:</label>
+                    <select id="yearSelector" class="bg-slate-800 text-white border border-slate-600 rounded px-2 py-0.5 text-xs font-medium focus:outline-none"></select>
                 </div>
-                <button onclick="fetchDataFromGoogle()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium px-3 py-2 rounded-xl border border-slate-600 transition-colors cursor-pointer">
-                    🔄 Sincronizar Google Sheets
+                <button onclick="fetchDataFromGoogle()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium px-3 py-1 rounded-lg border border-slate-600 transition-colors cursor-pointer">
+                    🔄 Sincronizar
                 </button>
             </div>
         </header>
 
         <!-- Alerta de Estado -->
-        <div id="statusAlert" class="hidden p-4 rounded-xl text-sm font-medium border"></div>
+        <div id="statusAlert" class="hidden px-3 py-1 rounded-lg text-xs font-medium border"></div>
 
         <!-- Resumen Consolidado -->
-        <section class="space-y-4">
-            <div class="flex items-center gap-2">
-                <div class="h-5 w-1 bg-teal-500 rounded"></div>
-                <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300">Resumen Consolidado del Período</h2>
+        <section class="grid grid-cols-4 gap-3">
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Suma Compras Total</p>
+                <p id="annualPurchases" class="text-base font-bold text-white">Bs 0.00</p>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Suma de Compras Total</p>
-                    <p id="annualPurchases" class="text-2xl font-bold mt-2 text-white">Bs 0.00</p>
-                </div>
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Inventario Promedio Total</p>
-                    <p id="annualAvgInventory" class="text-2xl font-bold mt-2 text-teal-400">Bs 0.00</p>
-                </div>
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Rotación del Período</p>
-                    <p id="annualRotation" class="text-2xl font-bold mt-2 text-amber-400">0.00x</p>
-                </div>
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Días de Cobertura Prom.</p>
-                    <p id="annualDays" class="text-2xl font-bold mt-2 text-rose-400">0.00 días</p>
-                </div>
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Inventario Promed.</p>
+                <p id="annualAvgInventory" class="text-base font-bold text-teal-400">Bs 0.00</p>
+            </div>
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Rotación Período</p>
+                <p id="annualRotation" class="text-base font-bold text-amber-400">0.00x</p>
+            </div>
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Días Cobertura Prom.</p>
+                <p id="annualDays" class="text-base font-bold text-rose-400">0.00 días</p>
             </div>
         </section>
 
         <!-- Detalle Mensual -->
-        <section class="space-y-4">
-            <div class="flex items-center justify-between">
+        <section class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60">
+            <div class="flex items-center justify-between mb-1.5">
                 <div class="flex items-center gap-2">
-                    <div class="h-5 w-1 bg-indigo-500 rounded"></div>
-                    <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300">Detalle por Mes Seleccionado</h2>
+                    <div class="h-3.5 w-1 bg-indigo-500 rounded"></div>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Detalle del Mes</h2>
                 </div>
-                <select id="monthSelector" class="bg-slate-800 text-sm border border-slate-600 rounded-lg px-3 py-1.5 focus:outline-none text-white font-medium"></select>
+                <select id="monthSelector" class="bg-slate-800 text-xs border border-slate-600 rounded px-2 py-0.5 focus:outline-none text-white font-medium"></select>
+            </div>
+            <div class="grid grid-cols-4 gap-3">
+                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
+                    <p class="text-[10px] text-slate-400">Compras del Mes</p>
+                    <p id="mPurchases" class="text-sm font-bold text-slate-200">-</p>
+                </div>
+                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
+                    <p class="text-[10px] text-slate-400">Inventario Promed.</p>
+                    <p id="mInventory" class="text-sm font-bold text-slate-200">-</p>
+                </div>
+                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
+                    <p class="text-[10px] text-slate-400">Rotación Mensual</p>
+                    <p id="mRotation" class="text-sm font-bold text-slate-200">-</p>
+                </div>
+                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
+                    <p class="text-[10px] text-slate-400">Días Stock (Base 30)</p>
+                    <p id="mDays" class="text-sm font-bold text-slate-200">-</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficos Principales (3 Columnas) -->
+        <section class="grid grid-cols-3 gap-3 flex-1 min-h-0">
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col justify-between">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Compras vs Inventario</h3>
+                <div class="relative flex-1 w-full"><canvas id="financialChart"></canvas></div>
+            </div>
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col justify-between">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Rotación (Veces)</h3>
+                <div class="relative flex-1 w-full"><canvas id="rotationChart"></canvas></div>
+            </div>
+            <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col justify-between">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Días de Stock</h3>
+                <div class="relative flex-1 w-full"><canvas id="daysChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- Capacidad Física (Racks & Estantes) -->
+        <section class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 flex items-center gap-3">
+                <div class="w-10 h-10 flex-shrink-0"><canvas id="racksPieChart"></canvas></div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-300 uppercase">Racks</span>
+                        <span id="racksUsedText" class="font-semibold text-teal-400 text-[11px]">-</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1">
+                        <div id="racksProgressBar" class="bg-teal-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
-                    <p class="text-xs text-slate-400 font-medium">Compras del Mes</p>
-                    <p id="mPurchases" class="text-xl font-bold text-slate-200 mt-1">-</p>
-                </div>
-                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
-                    <p class="text-xs text-slate-400 font-medium">Inventario Promedio</p>
-                    <p id="mInventory" class="text-xl font-bold text-slate-200 mt-1">-</p>
-                </div>
-                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
-                    <p class="text-xs text-slate-400 font-medium">Rotación Mensual</p>
-                    <p id="mRotation" class="text-xl font-bold text-slate-200 mt-1">-</p>
-                </div>
-                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
-                    <p class="text-xs text-slate-400 font-medium">Días de Stock (Base 30)</p>
-                    <p id="mDays" class="text-xl font-bold text-slate-200 mt-1">-</p>
+            <div class="bg-slate-800 p-2 rounded-xl border border-slate-700 flex items-center gap-3">
+                <div class="w-10 h-10 flex-shrink-0"><canvas id="shelvesPieChart"></canvas></div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-300 uppercase">Estantes</span>
+                        <span id="shelvesUsedText" class="font-semibold text-indigo-400 text-[11px]">-</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1">
+                        <div id="shelvesProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Gráficos -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Relación Financiera: Compras vs Inventario</h3>
-                <div class="h-72"><canvas id="financialChart"></canvas></div>
-            </div>
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Eficiencia Logística: Rotación y Días</h3>
-                <div class="h-72"><canvas id="logisticChart"></canvas></div>
-            </div>
-        </section>
-
-        <!-- Capacidad Física -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col md:flex-row items-center gap-6">
-                <div class="w-1/3 max-w-[120px]"><canvas id="racksPieChart"></canvas></div>
-                <div class="flex-1 space-y-2 w-full">
-                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Ocupación de Racks</h4>
-                    <div class="flex justify-between text-xs text-slate-400 pt-2"><span>Espacio Utilizado:</span><span id="racksUsedText" class="font-semibold text-white">-</span></div>
-                    <div class="flex justify-between text-xs text-slate-400"><span>Capacidad Total:</span><span id="racksTotalText" class="font-semibold text-slate-200">-</span></div>
-                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2"><div id="racksProgressBar" class="bg-teal-500 h-full w-0 transition-all duration-500"></div></div>
-                </div>
-            </div>
-
-            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex flex-col md:flex-row items-center gap-6">
-                <div class="w-1/3 max-w-[120px]"><canvas id="shelvesPieChart"></canvas></div>
-                <div class="flex-1 space-y-2 w-full">
-                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Ocupación de Estantes</h4>
-                    <div class="flex justify-between text-xs text-slate-400 pt-2"><span>Espacio Utilizado:</span><span id="shelvesUsedText" class="font-semibold text-white">-</span></div>
-                    <div class="flex justify-between text-xs text-slate-400"><span>Capacidad Total:</span><span id="shelvesTotalText" class="font-semibold text-slate-200">-</span></div>
-                    <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2"><div id="shelvesProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div></div>
-                </div>
-            </div>
-        </section>
     </div>
 
     <script>
-        // =====================================================================
-        // 1) PEGA AQUÍ TU ENLACE CSV DE GOOGLE SHEETS (ver instrucciones abajo)
-        //    Debe terminar en algo como: .../pub?gid=0&single=true&output=csv
-        // =====================================================================
         const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pub?output=csv";
 
         let rawData = [];
         let financialChartInstance = null;
-        let logisticChartInstance = null;
+        let rotationChartInstance = null;
+        let daysChartInstance = null;
         let racksPieInstance = null;
         let shelvesPieInstance = null;
 
@@ -154,12 +153,12 @@
         function setBadge(text, colorClass) {
             const badge = document.getElementById('liveBadge');
             badge.innerText = text;
-            badge.className = "text-xs font-semibold px-2.5 py-1 rounded-full border " + colorClass;
+            badge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full border " + colorClass;
         }
 
         function showStatus(msg, type) {
             const alert = document.getElementById('statusAlert');
-            alert.className = "p-4 rounded-xl text-sm font-medium border " + (type === 'success' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : type === 'error' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20");
+            alert.className = "px-3 py-1 rounded-lg text-xs font-medium border " + (type === 'success' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : type === 'error' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20");
             alert.innerText = msg;
             alert.classList.remove('hidden');
         }
@@ -167,15 +166,9 @@
         function fetchDataFromGoogle() {
             setBadge("Sincronizando...", "bg-amber-500/20 text-amber-400 border-amber-500/30");
 
-            if (!googleSheetCsvUrl || googleSheetCsvUrl.includes("PON_TU_ENLACE_CSV_AQUI")) {
-                setBadge("Falta pegar el enlace", "bg-rose-500/20 text-rose-400 border-rose-500/30");
-                showStatus('Edita el archivo y pega tu enlace CSV de Google Sheets en la variable googleSheetCsvUrl.', 'error');
-                return;
-            }
-
             fetch(googleSheetCsvUrl)
                 .then(response => {
-                    if (!response.ok) throw new Error('No se pudo leer la hoja (revisa que esté publicada).');
+                    if (!response.ok) throw new Error('No se pudo leer la hoja.');
                     return response.text();
                 })
                 .then(csvText => {
@@ -185,11 +178,10 @@
                         showStatus('¡Datos sincronizados con éxito!', 'success');
                     } else {
                         setBadge("Verificar Columnas", "bg-rose-500/20 text-rose-400 border-rose-500/30");
-                        showStatus('No se encontraron filas válidas. Revisa los nombres de columnas en la hoja.', 'error');
+                        showStatus('No se encontraron filas válidas.', 'error');
                     }
                 })
                 .catch(err => {
-                    console.error(err);
                     setBadge("Error de Conexión", "bg-rose-500/20 text-rose-400 border-rose-500/30");
                     showStatus('Error: ' + err.message, 'error');
                 });
@@ -219,7 +211,7 @@
             if (lines.length < 2) { rawData = []; return; }
 
             const separator = lines[0].includes(";") ? ";" : ",";
-            const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '').replace(/\s+/g, '');
+            const cleanString = (str) => str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/"/g, '').replace(/_/g, '').replace(/\s+/g, '');
             const headers = splitCsvLine(lines[0], separator).map(cleanString);
 
             const dataRows = [];
@@ -326,31 +318,45 @@
 
         function renderTrends(data) {
             const labels = data.map(r => r.month);
+            
+            const barColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#34d399', '#fbbf24'];
+
+            // 1. Gráfico Financiero
             if (financialChartInstance) financialChartInstance.destroy();
             financialChartInstance = new Chart(document.getElementById('financialChart').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Suma de Compras', data: data.map(r => r.purchases), backgroundColor: '#0ea5e9' },
-                        { label: 'Inventario Promedio', data: data.map(r => r.avgInventory), borderColor: '#2dd4bf', type: 'line', borderWidth: 3, pointRadius: 4 }
+                        { label: 'Suma Compras', data: data.map(r => r.purchases), backgroundColor: barColors.slice(0, data.length), borderRadius: 4 },
+                        { label: 'Inv. Promedio', data: data.map(r => r.avgInventory), borderColor: '#2dd4bf', type: 'line', borderWidth: 2, pointRadius: 3 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 8 } } } } }
             });
 
+            // 2. Gráfico de Rotación
             const rotationData = data.map(r => r.avgInventory > 0 ? r.purchases / r.avgInventory : 0);
-            if (logisticChartInstance) logisticChartInstance.destroy();
-            logisticChartInstance = new Chart(document.getElementById('logisticChart').getContext('2d'), {
+            if (rotationChartInstance) rotationChartInstance.destroy();
+            rotationChartInstance = new Chart(document.getElementById('rotationChart').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [
-                        { label: 'Rotación (Veces)', data: rotationData, borderColor: '#f59e0b', borderWidth: 3, yAxisID: 'yRot' },
-                        { label: 'Días de Stock', data: rotationData.map(rot => rot > 0 ? 30 / rot : 0), borderColor: '#f43f5e', borderWidth: 3, yAxisID: 'yDays' }
-                    ]
+                    datasets: [{ label: 'Rotación (Veces)', data: rotationData, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, borderWidth: 2, pointRadius: 3 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yRot: { type: 'linear', position: 'left', grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, yDays: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#94a3b8' } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 8 } } } } }
+            });
+
+            // 3. Gráfico de Días de Stock
+            const daysData = rotationData.map(rot => rot > 0 ? 30 / rot : 0);
+            if (daysChartInstance) daysChartInstance.destroy();
+            daysChartInstance = new Chart(document.getElementById('daysChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Días de Stock', data: daysData, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true, borderWidth: 2, pointRadius: 3 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 8 } } } } }
             });
         }
 
@@ -359,13 +365,11 @@
             const hasShelves = mData.shelvesTotal > 0;
 
             const rPct = hasRacks ? (mData.racksUsed / mData.racksTotal) * 100 : 0;
-            document.getElementById('racksUsedText').innerText = hasRacks ? mData.racksUsed + ' pos.' : '-';
-            document.getElementById('racksTotalText').innerText = hasRacks ? mData.racksTotal + ' pos.' : '-';
+            document.getElementById('racksUsedText').innerText = hasRacks ? `${mData.racksUsed} / ${mData.racksTotal} (${rPct.toFixed(0)}%)` : '-';
             document.getElementById('racksProgressBar').style.width = `${rPct}%`;
 
             const sPct = hasShelves ? (mData.shelvesUsed / mData.shelvesTotal) * 100 : 0;
-            document.getElementById('shelvesUsedText').innerText = hasShelves ? mData.shelvesUsed + ' est.' : '-';
-            document.getElementById('shelvesTotalText').innerText = hasShelves ? mData.shelvesTotal + ' est.' : '-';
+            document.getElementById('shelvesUsedText').innerText = hasShelves ? `${mData.shelvesUsed} / ${mData.shelvesTotal} (${sPct.toFixed(0)}%)` : '-';
             document.getElementById('shelvesProgressBar').style.width = `${sPct}%`;
 
             if (racksPieInstance) racksPieInstance.destroy();
