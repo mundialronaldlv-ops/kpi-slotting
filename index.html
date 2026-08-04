@@ -42,15 +42,15 @@
         <!-- Estado de Alerta -->
         <div id="statusAlert" class="hidden px-3 py-1 rounded-lg text-xs font-medium border"></div>
 
-        <!-- Tarjetas KPI (Fila Única Ajustable) -->
+        <!-- Tarjetas KPI (En Millones) -->
         <section class="grid grid-cols-4 gap-3">
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
                 <p id="kpiPurchasesLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Suma Compras</p>
-                <p id="kpiPurchases" class="text-base font-bold text-white">Bs 0.00</p>
+                <p id="kpiPurchases" class="text-base font-bold text-white">Bs 0.00 M</p>
             </div>
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
                 <p id="kpiInventoryLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Inventario Promed.</p>
-                <p id="kpiInventory" class="text-base font-bold text-teal-400">Bs 0.00</p>
+                <p id="kpiInventory" class="text-base font-bold text-teal-400">Bs 0.00 M</p>
             </div>
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
                 <p id="kpiRotationLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Rotación</p>
@@ -62,10 +62,10 @@
             </div>
         </section>
 
-        <!-- Gráficos Principales (3 Columnas con Tendencia Histórica) -->
+        <!-- Gráficos Principales -->
         <section class="grid grid-cols-3 gap-3 flex-1 min-h-0">
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col justify-between">
-                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Compras vs Inventario</h3>
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Compras vs Inventario (Millones Bs)</h3>
                 <div class="relative flex-1 w-full"><canvas id="financialChart"></canvas></div>
             </div>
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col justify-between">
@@ -117,7 +117,11 @@
         let racksPieInstance = null;
         let shelvesPieInstance = null;
 
-        const formatBs = (val) => new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB' }).format(val).replace('BOB', 'Bs.');
+        // Formato a Millones de Bolivianos (ej: Bs 19.64 M)
+        const formatBsM = (val) => {
+            const mill = val / 1000000;
+            return 'Bs ' + mill.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' M';
+        };
 
         window.onload = function () {
             fetchDataLocal();
@@ -198,15 +202,23 @@
                 dataRows.push(rowObj);
             }
 
+            // Corrección de lectura numérica (soporta miles con puntos)
             const cleanNumber = (val) => {
                 if (!val) return 0;
-                let parsed = val.replace(/[^0-9.,-]/g, '').trim();
-                if (parsed.includes(',') && parsed.includes('.')) {
-                    parsed = parsed.replace(/,/g, '');
-                } else if (parsed.includes(',')) {
-                    parsed = parsed.replace(',', '.');
+                let s = String(val).replace(/[^0-9.,-]/g, '').trim();
+                if (!s) return 0;
+
+                if (s.includes('.') && s.includes(',')) {
+                    s = s.replace(/\./g, '').replace(',', '.');
+                } else if (s.includes('.')) {
+                    let parts = s.split('.');
+                    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+                        s = s.replace(/\./g, '');
+                    }
+                } else if (s.includes(',')) {
+                    s = s.replace(',', '.');
                 }
-                return parseFloat(parsed) || 0;
+                return parseFloat(s) || 0;
             };
 
             rawData = dataRows.map(row => {
@@ -271,7 +283,6 @@
             let yearFilteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
             if (yearFilteredData.length === 0) return;
 
-            // Actualizar Tarjetas KPI en Fila Única
             if (selectedMonth === "Todos") {
                 const totalPurchases = yearFilteredData.reduce((sum, r) => sum + r.purchases, 0);
                 const avgInventory = yearFilteredData.reduce((sum, r) => sum + r.avgInventory, 0) / yearFilteredData.length;
@@ -279,9 +290,9 @@
                 const totalPeriodDays = periodRotation > 0 ? (yearFilteredData.length * 30) / periodRotation : 0;
 
                 document.getElementById('kpiPurchasesLabel').innerText = "Suma Compras (Total)";
-                document.getElementById('kpiPurchases').innerText = formatBs(totalPurchases);
+                document.getElementById('kpiPurchases').innerText = formatBsM(totalPurchases);
                 document.getElementById('kpiInventoryLabel').innerText = "Inventario Promed. (Año)";
-                document.getElementById('kpiInventory').innerText = formatBs(avgInventory);
+                document.getElementById('kpiInventory').innerText = formatBsM(avgInventory);
                 document.getElementById('kpiRotationLabel').innerText = "Rotación (Período)";
                 document.getElementById('kpiRotation').innerText = periodRotation.toFixed(2) + 'x';
                 document.getElementById('kpiDaysLabel').innerText = "Días Cobertura (Prom.)";
@@ -295,9 +306,9 @@
                 const mDays = mRotation > 0 ? 30 / mRotation : 0;
 
                 document.getElementById('kpiPurchasesLabel').innerText = `Compras (${monthData.month})`;
-                document.getElementById('kpiPurchases').innerText = formatBs(monthData.purchases);
+                document.getElementById('kpiPurchases').innerText = formatBsM(monthData.purchases);
                 document.getElementById('kpiInventoryLabel').innerText = `Inv. Promed. (${monthData.month})`;
-                document.getElementById('kpiInventory').innerText = formatBs(monthData.avgInventory);
+                document.getElementById('kpiInventory').innerText = formatBsM(monthData.avgInventory);
                 document.getElementById('kpiRotationLabel').innerText = `Rotación (${monthData.month})`;
                 document.getElementById('kpiRotation').innerText = mRotation.toFixed(2) + 'x';
                 document.getElementById('kpiDaysLabel').innerText = `Días Stock (${monthData.month})`;
@@ -306,7 +317,6 @@
                 updatePhysicalMetrics(monthData);
             }
 
-            // Mantiene siempre las tendencias anuales en los gráficos
             renderTrends(yearFilteredData);
         }
 
@@ -314,18 +324,29 @@
             const labels = data.map(r => r.month);
             const barColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#34d399', '#fbbf24'];
 
-            // 1. Gráfico Financiero
+            // 1. Gráfico Financiero (Valores en Millones)
             if (financialChartInstance) financialChartInstance.destroy();
             financialChartInstance = new Chart(document.getElementById('financialChart').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Suma Compras', data: data.map(r => r.purchases), backgroundColor: barColors.slice(0, data.length), borderRadius: 4 },
-                        { label: 'Inv. Promedio', data: data.map(r => r.avgInventory), borderColor: '#2dd4bf', type: 'line', borderWidth: 2, pointRadius: 3 }
+                        { label: 'Suma Compras (M)', data: data.map(r => (r.purchases / 1000000).toFixed(2)), backgroundColor: barColors.slice(0, data.length), borderRadius: 4 },
+                        { label: 'Inv. Promedio (M)', data: data.map(r => (r.avgInventory / 1000000).toFixed(2)), borderColor: '#2dd4bf', type: 'line', borderWidth: 2, pointRadius: 3 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 8 } } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', boxWidth: 10 } },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: Bs ${ctx.raw} M` } }
+                    },
+                    scales: {
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 8 }, callback: (val) => val + ' M' } }
+                    }
+                }
             });
 
             // 2. Gráfico de Rotación
