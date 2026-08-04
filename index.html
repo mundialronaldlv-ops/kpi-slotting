@@ -13,14 +13,14 @@
 </head>
 <body class="h-screen w-screen p-4 bg-slate-900 text-slate-100 flex flex-col overflow-hidden justify-between">
 
-    <div class="max-w-[1600px] mx-auto w-full h-full flex flex-col justify-between gap-3">
+    <div class="max-w-[1600px] mx-auto w-full h-full flex flex-col justify-between gap-2.5">
 
-        <!-- Header -->
+        <!-- Control Superior -->
         <header class="flex justify-between items-center bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 shadow-md">
             <div>
                 <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
                     📊 Reporte Ejecutivo de Rotación e Inventarios
-                    <span id="liveBadge" class="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">Conectando...</span>
+                    <span id="liveBadge" class="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">Cargando datos.csv...</span>
                 </h1>
             </div>
 
@@ -29,65 +29,40 @@
                     <label for="yearSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Año:</label>
                     <select id="yearSelector" class="bg-slate-800 text-white border border-slate-600 rounded px-2 py-0.5 text-xs font-medium focus:outline-none"></select>
                 </div>
-                <button onclick="fetchDataFromGoogle()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium px-3 py-1 rounded-lg border border-slate-600 transition-colors cursor-pointer">
+                <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-700">
+                    <label for="monthSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Mes:</label>
+                    <select id="monthSelector" class="bg-slate-800 text-white border border-slate-600 rounded px-2 py-0.5 text-xs font-medium focus:outline-none"></select>
+                </div>
+                <button onclick="fetchDataLocal()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium px-3 py-1 rounded-lg border border-slate-600 transition-colors cursor-pointer">
                     🔄 Sincronizar
                 </button>
             </div>
         </header>
 
-        <!-- Alerta de Estado -->
+        <!-- Estado de Alerta -->
         <div id="statusAlert" class="hidden px-3 py-1 rounded-lg text-xs font-medium border"></div>
 
-        <!-- Resumen Consolidado -->
+        <!-- Tarjetas KPI (Fila Única Ajustable) -->
         <section class="grid grid-cols-4 gap-3">
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Suma Compras Total</p>
-                <p id="annualPurchases" class="text-base font-bold text-white">Bs 0.00</p>
+                <p id="kpiPurchasesLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Suma Compras</p>
+                <p id="kpiPurchases" class="text-base font-bold text-white">Bs 0.00</p>
             </div>
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Inventario Promed.</p>
-                <p id="annualAvgInventory" class="text-base font-bold text-teal-400">Bs 0.00</p>
+                <p id="kpiInventoryLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Inventario Promed.</p>
+                <p id="kpiInventory" class="text-base font-bold text-teal-400">Bs 0.00</p>
             </div>
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Rotación Período</p>
-                <p id="annualRotation" class="text-base font-bold text-amber-400">0.00x</p>
+                <p id="kpiRotationLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Rotación</p>
+                <p id="kpiRotation" class="text-base font-bold text-amber-400">0.00x</p>
             </div>
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Días Cobertura Prom.</p>
-                <p id="annualDays" class="text-base font-bold text-rose-400">0.00 días</p>
+                <p id="kpiDaysLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Días Cobertura</p>
+                <p id="kpiDays" class="text-base font-bold text-rose-400">0.00 días</p>
             </div>
         </section>
 
-        <!-- Detalle Mensual -->
-        <section class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60">
-            <div class="flex items-center justify-between mb-1.5">
-                <div class="flex items-center gap-2">
-                    <div class="h-3.5 w-1 bg-indigo-500 rounded"></div>
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Detalle del Mes</h2>
-                </div>
-                <select id="monthSelector" class="bg-slate-800 text-xs border border-slate-600 rounded px-2 py-0.5 focus:outline-none text-white font-medium"></select>
-            </div>
-            <div class="grid grid-cols-4 gap-3">
-                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
-                    <p class="text-[10px] text-slate-400">Compras del Mes</p>
-                    <p id="mPurchases" class="text-sm font-bold text-slate-200">-</p>
-                </div>
-                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
-                    <p class="text-[10px] text-slate-400">Inventario Promed.</p>
-                    <p id="mInventory" class="text-sm font-bold text-slate-200">-</p>
-                </div>
-                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
-                    <p class="text-[10px] text-slate-400">Rotación Mensual</p>
-                    <p id="mRotation" class="text-sm font-bold text-slate-200">-</p>
-                </div>
-                <div class="bg-slate-800/80 p-2 rounded-lg border border-slate-700/50">
-                    <p class="text-[10px] text-slate-400">Días Stock (Base 30)</p>
-                    <p id="mDays" class="text-sm font-bold text-slate-200">-</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Gráficos Principales (3 Columnas) -->
+        <!-- Gráficos Principales (3 Columnas con Tendencia Histórica) -->
         <section class="grid grid-cols-3 gap-3 flex-1 min-h-0">
             <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex flex-col justify-between">
                 <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Compras vs Inventario</h3>
@@ -135,8 +110,6 @@
     </div>
 
     <script>
-        const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuUBO5np26HdRcvZxqVQmRg0zuNiyWWjRjckHYn76NjzpgCU0pKricJG_c-xLYCMEiqP6TMXHanpFi/pub?output=csv";
-
         let rawData = [];
         let financialChartInstance = null;
         let rotationChartInstance = null;
@@ -147,7 +120,7 @@
         const formatBs = (val) => new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB' }).format(val).replace('BOB', 'Bs.');
 
         window.onload = function () {
-            fetchDataFromGoogle();
+            fetchDataLocal();
         };
 
         function setBadge(text, colorClass) {
@@ -163,26 +136,26 @@
             alert.classList.remove('hidden');
         }
 
-        function fetchDataFromGoogle() {
-            setBadge("Sincronizando...", "bg-amber-500/20 text-amber-400 border-amber-500/30");
+        function fetchDataLocal() {
+            setBadge("Leyendo datos.csv...", "bg-amber-500/20 text-amber-400 border-amber-500/30");
 
-            fetch(googleSheetCsvUrl)
+            fetch('datos.csv')
                 .then(response => {
-                    if (!response.ok) throw new Error('No se pudo leer la hoja.');
+                    if (!response.ok) throw new Error('No se encontró datos.csv en el repositorio.');
                     return response.text();
                 })
                 .then(csvText => {
                     parseCsvData(csvText);
                     if (rawData.length > 0) {
-                        setBadge("Live Connected", "bg-emerald-500/20 text-emerald-400 border-emerald-500/30");
-                        showStatus('¡Datos sincronizados con éxito!', 'success');
+                        setBadge("datos.csv Conectado", "bg-emerald-500/20 text-emerald-400 border-emerald-500/30");
+                        showStatus('¡Datos de datos.csv cargados con éxito!', 'success');
                     } else {
-                        setBadge("Verificar Columnas", "bg-rose-500/20 text-rose-400 border-rose-500/30");
-                        showStatus('No se encontraron filas válidas.', 'error');
+                        setBadge("Archivo Vacío", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                        showStatus('No se encontraron registros válidos en datos.csv.', 'error');
                     }
                 })
                 .catch(err => {
-                    setBadge("Error de Conexión", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                    setBadge("Error de Archivo", "bg-rose-500/20 text-rose-400 border-rose-500/30");
                     showStatus('Error: ' + err.message, 'error');
                 });
         }
@@ -270,55 +243,75 @@
             years.forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
 
             yearSel.value = years[years.length - 1] || "Todos";
-            yearSel.onchange = () => updateDashboard();
-            document.getElementById('monthSelector').onchange = () => updateSpecificMonth();
+            yearSel.onchange = () => {
+                buildMonthOptions();
+                updateDashboard();
+            };
+
+            document.getElementById('monthSelector').onchange = () => updateDashboard();
+            buildMonthOptions();
+        }
+
+        function buildMonthOptions() {
+            const selectedYear = document.getElementById('yearSelector').value;
+            const filteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
+            const monthSel = document.getElementById('monthSelector');
+
+            monthSel.innerHTML = '<option value="Todos">Todos</option>';
+            filteredData.forEach(r => {
+                monthSel.innerHTML += `<option value="${r.month}">${r.month}</option>`;
+            });
+            monthSel.value = "Todos";
         }
 
         function updateDashboard() {
             const selectedYear = document.getElementById('yearSelector').value;
-            let filteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
-            if (filteredData.length === 0) return;
+            const selectedMonth = document.getElementById('monthSelector').value;
 
-            const monthSel = document.getElementById('monthSelector');
-            monthSel.innerHTML = '';
-            filteredData.forEach((r, idx) => monthSel.innerHTML += `<option value="${idx}">${r.month}</option>`);
+            let yearFilteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
+            if (yearFilteredData.length === 0) return;
 
-            const totalPurchases = filteredData.reduce((sum, r) => sum + r.purchases, 0);
-            const avgInventory = filteredData.reduce((sum, r) => sum + r.avgInventory, 0) / filteredData.length;
-            const periodRotation = avgInventory > 0 ? totalPurchases / avgInventory : 0;
-            const totalPeriodDays = periodRotation > 0 ? (filteredData.length * 30) / periodRotation : 0;
+            // Actualizar Tarjetas KPI en Fila Única
+            if (selectedMonth === "Todos") {
+                const totalPurchases = yearFilteredData.reduce((sum, r) => sum + r.purchases, 0);
+                const avgInventory = yearFilteredData.reduce((sum, r) => sum + r.avgInventory, 0) / yearFilteredData.length;
+                const periodRotation = avgInventory > 0 ? totalPurchases / avgInventory : 0;
+                const totalPeriodDays = periodRotation > 0 ? (yearFilteredData.length * 30) / periodRotation : 0;
 
-            document.getElementById('annualPurchases').innerText = formatBs(totalPurchases);
-            document.getElementById('annualAvgInventory').innerText = formatBs(avgInventory);
-            document.getElementById('annualRotation').innerText = periodRotation.toFixed(2) + 'x';
-            document.getElementById('annualDays').innerText = totalPeriodDays.toFixed(2) + ' días';
+                document.getElementById('kpiPurchasesLabel').innerText = "Suma Compras (Total)";
+                document.getElementById('kpiPurchases').innerText = formatBs(totalPurchases);
+                document.getElementById('kpiInventoryLabel').innerText = "Inventario Promed. (Año)";
+                document.getElementById('kpiInventory').innerText = formatBs(avgInventory);
+                document.getElementById('kpiRotationLabel').innerText = "Rotación (Período)";
+                document.getElementById('kpiRotation').innerText = periodRotation.toFixed(2) + 'x';
+                document.getElementById('kpiDaysLabel').innerText = "Días Cobertura (Prom.)";
+                document.getElementById('kpiDays').innerText = totalPeriodDays.toFixed(2) + ' días';
 
-            renderTrends(filteredData);
-            monthSel.value = filteredData.length - 1;
-            updateSpecificMonth();
-        }
+                const latestMonthData = yearFilteredData[yearFilteredData.length - 1];
+                updatePhysicalMetrics(latestMonthData);
+            } else {
+                const monthData = yearFilteredData.find(r => r.month === selectedMonth) || yearFilteredData[0];
+                const mRotation = monthData.avgInventory > 0 ? monthData.purchases / monthData.avgInventory : 0;
+                const mDays = mRotation > 0 ? 30 / mRotation : 0;
 
-        function updateSpecificMonth() {
-            const selectedYear = document.getElementById('yearSelector').value;
-            let filteredData = selectedYear !== 'Todos' ? rawData.filter(r => r.year == selectedYear) : rawData;
-            const idx = document.getElementById('monthSelector').value;
-            if (idx === "" || !filteredData[idx]) return;
+                document.getElementById('kpiPurchasesLabel').innerText = `Compras (${monthData.month})`;
+                document.getElementById('kpiPurchases').innerText = formatBs(monthData.purchases);
+                document.getElementById('kpiInventoryLabel').innerText = `Inv. Promed. (${monthData.month})`;
+                document.getElementById('kpiInventory').innerText = formatBs(monthData.avgInventory);
+                document.getElementById('kpiRotationLabel').innerText = `Rotación (${monthData.month})`;
+                document.getElementById('kpiRotation').innerText = mRotation.toFixed(2) + 'x';
+                document.getElementById('kpiDaysLabel').innerText = `Días Stock (${monthData.month})`;
+                document.getElementById('kpiDays').innerText = mDays.toFixed(2) + ' días';
 
-            const mData = filteredData[idx];
-            const mRot = mData.avgInventory > 0 ? mData.purchases / mData.avgInventory : 0;
-            const mDays = mRot > 0 ? 30 / mRot : 0;
+                updatePhysicalMetrics(monthData);
+            }
 
-            document.getElementById('mPurchases').innerText = formatBs(mData.purchases);
-            document.getElementById('mInventory').innerText = formatBs(mData.avgInventory);
-            document.getElementById('mRotation').innerText = mRot.toFixed(2) + 'x';
-            document.getElementById('mDays').innerText = mDays.toFixed(2) + ' días';
-
-            updatePhysicalMetrics(mData);
+            // Mantiene siempre las tendencias anuales en los gráficos
+            renderTrends(yearFilteredData);
         }
 
         function renderTrends(data) {
             const labels = data.map(r => r.month);
-            
             const barColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#34d399', '#fbbf24'];
 
             // 1. Gráfico Financiero
@@ -361,6 +354,7 @@
         }
 
         function updatePhysicalMetrics(mData) {
+            if (!mData) return;
             const hasRacks = mData.racksTotal > 0;
             const hasShelves = mData.shelvesTotal > 0;
 
