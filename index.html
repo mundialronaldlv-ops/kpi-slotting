@@ -20,7 +20,7 @@
             <div>
                 <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
                     📊 Reporte Ejecutivo de Rotación e Inventarios
-                    <span id="liveBadge" class="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">Cargando datos.csv...</span>
+                    <span id="liveBadge" class="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-2 py-0.5 rounded-full border border-amber-500/30">Cargando Google Drive...</span>
                 </h1>
             </div>
 
@@ -33,7 +33,7 @@
                     <label for="monthSelector" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Mes:</label>
                     <select id="monthSelector" class="bg-slate-800 text-white border border-slate-600 rounded px-2 py-0.5 text-xs font-medium focus:outline-none"></select>
                 </div>
-                <button onclick="fetchDataLocal()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium px-3 py-1 rounded-lg border border-slate-600 transition-colors cursor-pointer">
+                <button onclick="fetchDataDrive()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium px-3 py-1 rounded-lg border border-slate-600 transition-colors cursor-pointer">
                     🔄 Sincronizar
                 </button>
             </div>
@@ -110,6 +110,8 @@
     </div>
 
     <script>
+        const DRIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBNHSKcKRrfBmC9FxhGrMWbjjHf4JNV7_fVW8H-pdjcCh4rXvWpPaHUhGoUG1LpA/pub?output=csv";
+
         let rawData = [];
         let financialChartInstance = null;
         let rotationChartInstance = null;
@@ -117,14 +119,13 @@
         let racksPieInstance = null;
         let shelvesPieInstance = null;
 
-        // Formato a Millones de Bolivianos (ej: Bs 19.64 M)
         const formatBsM = (val) => {
             const mill = val / 1000000;
             return 'Bs ' + mill.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' M';
         };
 
         window.onload = function () {
-            fetchDataLocal();
+            fetchDataDrive();
         };
 
         function setBadge(text, colorClass) {
@@ -140,26 +141,26 @@
             alert.classList.remove('hidden');
         }
 
-        function fetchDataLocal() {
-            setBadge("Leyendo datos.csv...", "bg-amber-500/20 text-amber-400 border-amber-500/30");
+        function fetchDataDrive() {
+            setBadge("Conectando con Google Drive...", "bg-amber-500/20 text-amber-400 border-amber-500/30");
 
-            fetch('datos.csv')
+            fetch(DRIVE_CSV_URL)
                 .then(response => {
-                    if (!response.ok) throw new Error('No se encontró datos.csv en el repositorio.');
+                    if (!response.ok) throw new Error('No se pudo conectar con el enlace publicado de Google Drive.');
                     return response.text();
                 })
                 .then(csvText => {
                     parseCsvData(csvText);
                     if (rawData.length > 0) {
-                        setBadge("datos.csv Conectado", "bg-emerald-500/20 text-emerald-400 border-emerald-500/30");
-                        showStatus('¡Datos de datos.csv cargados con éxito!', 'success');
+                        setBadge("Google Drive Conectado", "bg-emerald-500/20 text-emerald-400 border-emerald-500/30");
+                        showStatus('¡Datos cargados directamente desde Google Drive con éxito!', 'success');
                     } else {
-                        setBadge("Archivo Vacío", "bg-rose-500/20 text-rose-400 border-rose-500/30");
-                        showStatus('No se encontraron registros válidos en datos.csv.', 'error');
+                        setBadge("Sin Registros", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                        showStatus('No se encontraron registros válidos en la hoja de Google Drive.', 'error');
                     }
                 })
                 .catch(err => {
-                    setBadge("Error de Archivo", "bg-rose-500/20 text-rose-400 border-rose-500/30");
+                    setBadge("Error de Conexión", "bg-rose-500/20 text-rose-400 border-rose-500/30");
                     showStatus('Error: ' + err.message, 'error');
                 });
         }
@@ -202,7 +203,6 @@
                 dataRows.push(rowObj);
             }
 
-            // Corrección de lectura numérica (soporta miles con puntos)
             const cleanNumber = (val) => {
                 if (!val) return 0;
                 let s = String(val).replace(/[^0-9.,-]/g, '').trim();
@@ -324,7 +324,6 @@
             const labels = data.map(r => r.month);
             const barColors = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fb7185', '#34d399', '#fbbf24'];
 
-            // 1. Gráfico Financiero (Valores en Millones)
             if (financialChartInstance) financialChartInstance.destroy();
             financialChartInstance = new Chart(document.getElementById('financialChart').getContext('2d'), {
                 type: 'bar',
@@ -349,7 +348,6 @@
                 }
             });
 
-            // 2. Gráfico de Rotación
             const rotationData = data.map(r => r.avgInventory > 0 ? r.purchases / r.avgInventory : 0);
             if (rotationChartInstance) rotationChartInstance.destroy();
             rotationChartInstance = new Chart(document.getElementById('rotationChart').getContext('2d'), {
@@ -361,7 +359,6 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 8 } } } } }
             });
 
-            // 3. Gráfico de Días de Stock
             const daysData = rotationData.map(rot => rot > 0 ? 30 / rot : 0);
             if (daysChartInstance) daysChartInstance.destroy();
             daysChartInstance = new Chart(document.getElementById('daysChart').getContext('2d'), {
