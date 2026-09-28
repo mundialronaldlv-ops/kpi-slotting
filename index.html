@@ -203,20 +203,34 @@
                 dataRows.push(rowObj);
             }
 
+            // Lectura Numérica Robusta Multiformato
             const cleanNumber = (val) => {
                 if (!val) return 0;
                 let s = String(val).replace(/[^0-9.,-]/g, '').trim();
                 if (!s) return 0;
 
                 if (s.includes('.') && s.includes(',')) {
-                    s = s.replace(/\./g, '').replace(',', '.');
+                    let lastDot = s.lastIndexOf('.');
+                    let lastComma = s.lastIndexOf(',');
+                    if (lastDot > lastComma) {
+                        // Formato US: 16,752,031.73 (comas miles, punto decimal)
+                        s = s.replace(/,/g, '');
+                    } else {
+                        // Formato ES: 16.752.031,73 (puntos miles, coma decimal)
+                        s = s.replace(/\./g, '').replace(',', '.');
+                    }
+                } else if (s.includes(',')) {
+                    let parts = s.split(',');
+                    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+                        s = s.replace(/,/g, '');
+                    } else {
+                        s = s.replace(',', '.');
+                    }
                 } else if (s.includes('.')) {
                     let parts = s.split('.');
                     if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
                         s = s.replace(/\./g, '');
                     }
-                } else if (s.includes(',')) {
-                    s = s.replace(',', '.');
                 }
                 return parseFloat(s) || 0;
             };
